@@ -22,6 +22,10 @@ func main() {
 	if port == "" {
 		port = "8000"
 	}
+	// kafka.InitProducer("localhost:9092", "video-events")
+	// defer kafka.CloseProducer()
+	// kafka.StartConsumer("localhost:9092", "video-events", "my-group")
+	// kafka.ProduceMessage("video:123", "play_started")
 	app.Use(middleware.Logger(port))
 	app.Use(middleware.RateLimit())
 	routes.UserRoutes(app)
