@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/aishwary11/fiber-tut/types"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/pquerna/otp/totp"
 )
 

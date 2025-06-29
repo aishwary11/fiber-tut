@@ -7,17 +7,17 @@ import (
 	"time"
 
 	"github.com/aishwary11/fiber-tut/utils"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-var jwtSecret = os.Getenv("JWT_SECRET")
+var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 func JWTMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
-		if authHeader == "" {
+		if !strings.HasPrefix(authHeader, "Bearer ") {
 			return utils.ResponseHelper(c, fiber.StatusUnauthorized, "Missing or malformed JWT", nil)
 		}
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
@@ -31,7 +31,7 @@ func JWTMiddleware() fiber.Handler {
 			return utils.ResponseHelper(c, fiber.StatusUnauthorized, "Invalid or expired JWT", nil)
 		}
 		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok || !token.Valid {
+		if !ok {
 			return utils.ResponseHelper(c, fiber.StatusUnauthorized, "Invalid token claims", nil)
 		}
 		email, emailOk := claims["email"].(string)
@@ -43,8 +43,7 @@ func JWTMiddleware() fiber.Handler {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		var user bson.M
-		err = collection.FindOne(ctx, bson.M{"email": email, "name": name}).Decode(&user)
-		if err != nil {
+		if err := collection.FindOne(ctx, bson.M{"email": email, "name": name}).Decode(&user); err != nil {
 			return utils.ResponseHelper(c, fiber.StatusUnauthorized, "User not found", nil)
 		}
 		return c.Next()
