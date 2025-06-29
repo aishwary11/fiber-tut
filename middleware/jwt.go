@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"os"
 	"strings"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-var jwtSecret = []byte("JWT_SECRET")
+var jwtSecret = os.Getenv("JWT_SECRET")
 
 func JWTMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -20,7 +21,7 @@ func JWTMiddleware() fiber.Handler {
 			return utils.ResponseHelper(c, fiber.StatusUnauthorized, "Missing or malformed JWT", nil)
 		}
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fiber.NewError(fiber.StatusUnauthorized, "Unexpected signing method")
 			}
