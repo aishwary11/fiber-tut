@@ -27,7 +27,7 @@ func GenerateToken(user types.User) (string, error) {
 	return tokenString, nil
 }
 
-func ResponseHelper(c *fiber.Ctx, statusCode int, message string, data interface{}) error {
+func ResponseHelper(c *fiber.Ctx, statusCode int, message string, data any) error {
 	response := fiber.Map{
 		"message": message,
 		"data":    data,

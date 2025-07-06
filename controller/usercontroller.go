@@ -20,15 +20,17 @@ func SignIn(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	var user bson.M
-	err := collection.FindOne(ctx, bson.M{"email": req.Email, "name": req.Name}).Decode(&user)
-	if err != nil {
+	filter := bson.M{"email": req.Email, "name": req.Name}
+	if err := collection.FindOne(ctx, filter).Decode(&user); err != nil {
 		return utils.ResponseHelper(c, fiber.StatusUnauthorized, "User not found", nil)
 	}
-	if !utils.VerifyOTP(req.Otp, user["secret"].(string)) {
+	secret, ok := user["secret"].(string)
+	if !ok || !utils.VerifyOTP(req.Otp, secret) {
 		return utils.ResponseHelper(c, fiber.StatusUnauthorized, "Invalid OTP", nil)
 	}
+	id, _ := user["_id"].(primitive.ObjectID)
 	userStruct := types.User{
-		ID:    user["_id"].(primitive.ObjectID).Hex(),
+		ID:    id.Hex(),
 		Name:  req.Name,
 		Email: req.Email,
 	}
@@ -36,7 +38,7 @@ func SignIn(c *fiber.Ctx) error {
 	if err != nil {
 		return utils.ResponseHelper(c, fiber.StatusInternalServerError, "Failed to generate token", nil)
 	}
-	return utils.ResponseHelper(c, fiber.StatusOK, "Sign In successful", map[string]string{"token": token})
+	return utils.ResponseHelper(c, fiber.StatusOK, "Sign In successful", fiber.Map{"token": token})
 }
 
 func SignUp(c *fiber.Ctx) error {
